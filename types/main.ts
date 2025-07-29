@@ -1,6 +1,6 @@
 export type Sede = {
   slug: string;
-  shopigy_location_id: string;
+  shopify_location_id: string;
   name: string;
   image_url: string;
   created_at: string;

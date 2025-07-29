@@ -2,7 +2,6 @@
 import { neon } from '@neondatabase/serverless';
 
 if (!process.env.POSTGRES_URL) {
-  console.log(process.env.POSTGRES_URL)
   throw new Error('La variable de entorno POSTGRES_URL para la base de datos no está definida.');
 }
 

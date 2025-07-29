@@ -6,8 +6,8 @@ import Navbar from "@/components/layout/navbar";
 import { Auth0User, Sede } from "@/types";
 import { getAuth0User, getAvailableSedes } from "@/lib/api";
 import clsx from "clsx";
-import ProtectedLayout from "@/components/layout/protected-route";
 import { SessionProvider } from "@/context/session";
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +34,7 @@ export default async function RootLayout({
         >
           <Navbar user={user} availableSedes={availableSedes} />
           {children}
+          <Toaster richColors position="top-right" />
         </body>
       </SessionProvider>
     </html>

@@ -10,17 +10,25 @@ export type ShopifyInventoryQuantity = {
 // Representa una sola variante de un producto
 export type ShopifyVariant = {
   id: string;
-  title:string;
+  title: string;
   sku: string;
   // Para la consulta de detalle, que trae el inventario de múltiples sedes
-  inventoryQuantities?: {
-    edges: {
-      node: ShopifyInventoryQuantity;
+  inventoryItem?: {
+    id: string;
+    inventoryLevels: {
+      edges: {
+        node: {
+          quantities: {
+            name: string;
+            quantity: number;
+          }[];
+          location: {
+            id: string;
+            name: string;
+          };
+        };
+      }[];
     }[];
-  };
-  // Para la consulta de lista, que puede traer el inventario de una sola sede
-  inventoryQuantityAtLocation?: {
-    quantity: number;
   };
 };
 
@@ -31,6 +39,19 @@ export type ShopifyImage = {
 
 // Representa el nodo principal del producto
 export type ShopifyProduct = {
+  id: string;
+  title: string;
+  handle: string;
+  description?: string; // Opcional, ya que no siempre se pide
+  featuredImage?: ShopifyImage;
+  variants: {
+    edges: {
+      node: ShopifyVariant;
+    }[];
+  };
+};
+
+export type ShopifyProductDetail = {
   id: string;
   title: string;
   handle: string;
@@ -63,6 +84,55 @@ export type PaginatedProductsResponse = {
 
 export interface GetPaginatedProductsOptions {
   cursor?: string | null;
-  direction?: 'next' | 'prev';
+  direction?: "next" | "prev";
   q?: string | null;
 }
+
+export type ShopifyGraphQLResponse<T> = {
+  data: T;
+  errors?: { message: string }[];
+};
+
+// Tipo específico para la respuesta de la lista de productos
+export type PaginatedProductsData = {
+  products: PaginatedProductsResponse;
+};
+
+
+export type UpdateStockParams = {
+  inventoryItemId: string;
+  locationId: string;
+  delta: number;
+}
+
+export type AdjustInventoryResponse = {
+  userErrors: {
+    field: string;
+    message: string;
+  }[],
+  inventoryAdjustmentGroup: {
+    id: string;
+  };
+} 
+
+export type TransferLineItem =  {
+  variantId: string;
+  quantity: number;
+}
+
+export type CreateTransferParams =  {
+  originLocationId: string;
+  destinationLocationId: string;
+  lineItems: TransferLineItem[];
+}
+
+export type CreateTransferResponse = {
+  inventoryTransfer: {
+    id: string;
+    status: string;
+  };
+  userErrors: {
+    field: string;
+    message: string;
+  }[]
+};

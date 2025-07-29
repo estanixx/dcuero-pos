@@ -39,7 +39,7 @@ export const GET_PAGINATED_PRODUCTS = /* GraphQL */`
 
 // Consulta para obtener el detalle completo de UN solo producto
 export const GET_PRODUCT_DETAIL = /* GraphQL */`
-  query getProductDetail($id: ID!, $locationIds: [ID!]!) {
+  query getProductDetail($id: ID!, $locationQuery: String!) {
     product(id: $id) {
       id
       title
@@ -54,13 +54,21 @@ export const GET_PRODUCT_DETAIL = /* GraphQL */`
             id
             title
             sku
-            inventoryQuantities(first: 20, filter: {locationIds: $locationIds}) {
-              edges {
-                node {
-                  quantity
-                  location {
-                    id
-                    name
+            # CAMBIO CLAVE: Accedemos a través de inventoryItem
+            inventoryItem {
+              id
+              # Y luego a inventoryLevels, que sí se puede filtrar
+              inventoryLevels(first: 20, query: $locationQuery) {
+                edges {
+                  node {
+                    quantities(names: ["available"]) {
+                      name      
+                      quantity
+                    }
+                    location {
+                      id
+                      name
+                    }
                   }
                 }
               }
