@@ -28,11 +28,11 @@ export default function Navbar({ user, availableSedes }: { user: Auth0User | nul
       label: 'Clientes'
     },
     {
-      path: `/sede/${sede}/ventas`,
+      path: `/sede/${sede}/caja`,
       icon: FaShoppingCart,
-      label: 'Ventas'
+      label: 'Flujo de Caja'
     },
-    user?.sedes.includes('Administrator') && {
+    user?.roles.includes('Administrator') && {
       path: `/admin`,
       icon: FaUserCog,
       label: 'Admin'

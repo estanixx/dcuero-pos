@@ -90,3 +90,16 @@ export const getSedeBySlug = async (slug: string): Promise<Sede | null> => {
   }
   return null;
 };
+
+export const getSedesObject = cache(async (): Promise<{[key: string]: Sede}> => {
+  try {
+    // El namespace debe ser EXACTAMENTE el mismo que usaste en la Acción de Auth0
+    const result: Sede[] =
+      (await sql`SELECT slug, name, image_url, shopify_location_id FROM sell_location;`) as Sede[];
+    const locations = result;
+    return Object.fromEntries(locations.map((location) => [location.slug, location]));
+  } catch (error: any) {
+    console.error("Error al obtener las sedes:", error);
+    throw new Error('No se pudieron obtener las sedes disponibles.');
+  }
+});

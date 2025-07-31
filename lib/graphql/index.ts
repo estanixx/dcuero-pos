@@ -1,8 +1,8 @@
 'use server';
 import { sql } from "../db";
-import { ADJUST_INVENTORY_MUTATION, CREATE_INVENTORY_TRANSFER_MUTATION } from "./mutation";
-import { GET_PAGINATED_PRODUCTS, GET_PRODUCT_DETAIL } from "./query";
-import { AdjustInventoryResponse, CreateTransferParams, CreateTransferResponse, GetPaginatedProductsOptions, PaginatedProductsData, ShopifyGraphQLResponse, ShopifyProductDetail, UpdateStockParams } from "@/types";
+import { ADJUST_INVENTORY_MUTATION, CREATE_INVENTORY_TRANSFER_MUTATION, CREATE_CUSTOMER_MUTATION, CREATE_PRODUCT_MUTATION } from "./mutation";
+import { GET_PAGINATED_PRODUCTS, GET_PRODUCT_DETAIL,GET_PAGINATED_CUSTOMERS } from "./query";
+import { CreateCustomerParams, CreateCustomerResponse, GetPaginatedProductsOptions, PaginatedCustomersData, AdjustInventoryResponse, CreateTransferParams, CreateTransferResponse, PaginatedProductsData, ShopifyGraphQLResponse, ShopifyProductDetail, UpdateStockParams, CreateProductParams, CreateProductResponse } from "@/types";
 
 async function shopifyFetch<T>(query: string, variables: Record<string, any> = {}): Promise<Record<string, T>> {
   const { SHOPIFY_STORE_DOMAIN, SHOPIFY_ADMIN_API_ACCESS_TOKEN } = process.env;
@@ -130,20 +130,17 @@ export async function updateStock({ inventoryItemId, locationId, delta }: Update
 export async function createInventoryTransfer({ 
   originLocationId, 
   destinationLocationId, 
-  lineItems 
+  lineItems,
+  customer,
 }: CreateTransferParams) {
   
-  const formattedLineItems = lineItems.map(item => ({
-    variantId: item.variantId,
-    quantity: item.quantity,
-  }));
-
   const variables = {
     input: {
       originLocationId,
       destinationLocationId,
-      lineItems: formattedLineItems,
-      name: `Traslado POS - ${new Date().toLocaleDateString('es-CO')}`,
+      lineItems,
+      note: customer ? JSON.stringify(customer) : undefined,
+      referenceName: `Traslado POS - ${new Date().toLocaleDateString('es-CO')}`,
     },
   };
 
@@ -155,4 +152,146 @@ export async function createInventoryTransfer({
   }
 
   return data.inventoryTransferCreate.inventoryTransfer;
+}
+
+/**
+ * Obtiene una lista paginada de clientes de Shopify.
+ * @param options - Opciones de paginación y búsqueda.
+ */
+export async function getPaginatedCustomers(options: GetPaginatedProductsOptions = {}): Promise<PaginatedCustomersData> {
+  const { cursor, direction = 'next', q } = options;
+
+  const variables: Record<string, any> = {};
+  if (q) {
+    variables.query = `firstName:*${q}* OR lastName:*${q}* OR email:*${q}* OR phone:*${q}*`;
+  }
+
+  if (direction === 'next') {
+    variables.first = 10;
+    if (cursor) variables.after = cursor;
+  } else {
+    variables.last = 10;
+    if (cursor) variables.before = cursor;
+  }
+
+  const data = await shopifyFetch<PaginatedCustomersData>(GET_PAGINATED_CUSTOMERS, variables);
+  return data.customers;
+}
+
+/**
+ * Crea un nuevo cliente en Shopify.
+ * @param params - Los datos del cliente a crear.
+ * @returns El cliente creado.
+ */
+export async function createCustomer({ 
+  firstName, 
+  lastName, 
+  email, 
+  phone,
+  idNumber,
+  birthDate
+}: CreateCustomerParams) {
+  
+  const input: any = {
+    firstName,
+    lastName,
+    email,
+    phone,
+    emailMarketingConsent: {
+      marketingState: 'SUBSCRIBED',
+      marketingOptInLevel: 'SINGLE_OPT_IN'
+    },
+    smsMarketingConsent: {
+      marketingState: 'SUBSCRIBED',
+      marketingOptInLevel: 'SINGLE_OPT_IN'
+    }
+  };
+
+  // Añadir metafields para cédula y fecha de nacimiento si se proporcionan
+  const metafields = [];
+  
+  if (idNumber) {
+    metafields.push({
+      key: "id_number",
+      value: idNumber,
+      namespace: "custom",
+      type: 'id'
+    });
+  }
+  
+  if (birthDate) {
+    metafields.push({
+      key: "birth_date",
+      value: birthDate,
+      namespace: "custom",
+      type: 'date',
+    });
+  }
+  
+  if (metafields.length > 0) {
+    input.metafields = metafields;
+  }
+
+  const variables = {
+    input
+  };
+
+  const data = await shopifyFetch<CreateCustomerResponse>(CREATE_CUSTOMER_MUTATION, variables);
+  
+  const userErrors = data.customerCreate?.userErrors;
+  if (userErrors && userErrors.length > 0) {
+    console.error('Error al crear cliente:', userErrors);
+    throw new Error(userErrors[0].message);
+  }
+
+  return data.customerCreate.customer;
+}
+
+/**
+ * Creates a new product in Shopify.
+ * @param params - The product data to create.
+ * @returns The created product.
+ */
+export async function createProduct({ 
+  title, 
+  description, 
+  vendor,
+  productType,
+  sku,
+  price,
+  barcode,
+  inventoryQuantity,
+  locationId
+}: CreateProductParams) {
+  
+  const input: any = {
+    title,
+    descriptionHtml: description,
+    vendor,
+    productType,
+    status: "ACTIVE",
+    variants: [{
+      sku,
+      price,
+      barcode,
+      inventoryQuantities: inventoryQuantity && locationId ? [{
+        availableQuantity: inventoryQuantity,
+        locationId
+      }] : undefined
+    }]
+  };
+
+  const variables = {
+    input
+  };
+
+  const data = await shopifyFetch<CreateProductResponse>(CREATE_PRODUCT_MUTATION, variables);
+  
+  const userErrors = data.productCreate?.userErrors;
+  if (userErrors && userErrors.length > 0) {
+    console.error('Error creating product:', userErrors);
+    throw new Error(userErrors[0].message);
+  }
+
+  return data.productCreate.product;
 }

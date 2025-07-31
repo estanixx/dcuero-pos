@@ -4,16 +4,18 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaPlus } from 'react-icons/fa';
 import { ProductCard } from '@/components/inventory/product-card';
 import ProductDetailSidebar from '@/components/inventory/product-detail-sidebar';
 import { PaginatedProductsResponse, ShopifyProductEdge } from '@/types';
 import PaginationControls from '@/components/shared/pagination-controls';
+import { useProductModal } from '@/hooks/useProductModal';
 
 export default function InventarioPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { openProductModal } = useProductModal();
 
   const [productsData, setProductsData] = useState<PaginatedProductsResponse | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ShopifyProductEdge | null>(null);
@@ -103,6 +105,14 @@ export default function InventarioPage() {
             endCursor={pageInfo.endCursor}
           />
         )}
+
+        {/* Floating button to create a new product */}
+        <Button
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg"
+          onClick={openProductModal}
+        >
+          <FaPlus className="w-5 h-5" />
+        </Button>
       </div>
 
       <ProductDetailSidebar

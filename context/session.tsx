@@ -7,6 +7,7 @@ import { Auth0User, Sede } from '@/types';
 export type SessionContextType = {
   user: Auth0User | null;
   availableSedes: Sede[];
+  allSedes: { [key: string] : Sede };
 }
 
 // Creamos el contexto. ¡Asegúrate de exportarlo!

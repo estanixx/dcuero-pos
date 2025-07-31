@@ -8,6 +8,16 @@ export type ShopifyInventoryQuantity = {
 };
 
 // Representa una sola variante de un producto
+export type ShopifyLocation = {
+  name: string;
+  id: string;
+}
+
+export type ShopifyQuantity = {
+  name: string;
+  quantity: number;
+}
+
 export type ShopifyVariant = {
   id: string;
   title: string;
@@ -18,17 +28,11 @@ export type ShopifyVariant = {
     inventoryLevels: {
       edges: {
         node: {
-          quantities: {
-            name: string;
-            quantity: number;
-          }[];
-          location: {
-            id: string;
-            name: string;
-          };
+          quantities: ShopifyQuantity[];
+          location: ShopifyLocation;
         };
       }[];
-    }[];
+    };
   };
 };
 
@@ -135,4 +139,98 @@ export type CreateTransferResponse = {
     field: string;
     message: string;
   }[]
+};
+
+
+
+// Tipo para representar un cliente de Shopify
+export type ShopifyCustomer = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  // Campos personalizados para Colombia
+  metafields?: {
+    edges: {
+      node: {
+        key: string;
+        value: string;
+        namespace: string;
+      };
+    }[];
+  };
+};
+
+// Tipo para la respuesta paginada de clientes
+export type PaginatedCustomersResponse = {
+  edges: {
+    cursor: string;
+    node: ShopifyCustomer;
+  }[];
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string | null;
+    endCursor: string | null;
+  };
+};
+
+export type PaginatedCustomersData = {
+  customers: PaginatedCustomersResponse;
+};
+
+export type CreateCustomerParams = {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  idNumber?: string; // Cédula
+  birthDate?: string; // Fecha de nacimiento en formato ISO
+};
+
+export type CreateCustomerResponse = {
+  customerCreate: {
+    customer: ShopifyCustomer;
+    userErrors: {
+      field: string;
+      message: string;
+    }[];
+  };
+};
+
+// ... existing code ...
+
+export type CreateProductParams = {
+  title: string;
+  description?: string;
+  vendor?: string;
+  productType?: string;
+  sku?: string;
+  price?: string;
+  barcode?: string;
+  inventoryQuantity?: number;
+  locationId?: string;
+};
+
+export type CreateProductResponse = {
+  productCreate: {
+    product: {
+      id: string;
+      title: string;
+      handle: string;
+      variants: {
+        edges: {
+          node: {
+            id: string;
+            sku: string;
+          };
+        }[];
+      };
+    };
+    userErrors: {
+      field: string;
+      message: string;
+    }[];
+  };
 };

@@ -71,6 +71,9 @@ export default function ProductDetailSidebar({ productEdge, isOpen, onOpenChange
     if (isOpen && productEdge?.node.id) {
       fetchDetails();
     }
+    if (!isOpen && detailedProduct) {
+      setDetailedProduct(null);
+    }
   }, [isOpen, productEdge]);
 
   return (

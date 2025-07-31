@@ -13,11 +13,35 @@ export const ADJUST_INVENTORY_MUTATION = /* GraphQL */`
 `;
 
 export const CREATE_INVENTORY_TRANSFER_MUTATION = /* GraphQL */`
-  mutation inventoryTransferCreate($input: InventoryTransferInput!) {
+  mutation inventoryTransferCreate($input: InventoryTransferCreateInput!) {
     inventoryTransferCreate(input: $input) {
       inventoryTransfer {
         id
         status
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+export const CREATE_PRODUCT_MUTATION = /* GraphQL */`
+  mutation productCreate($input: ProductInput!, $media: [CreateMediaInput!]) {
+    productCreate(input: $input, media: $media) {
+      product {
+        id
+        title
+        handle
+        variants(first: 1) {
+          edges {
+            node {
+              id
+              sku
+            }
+          }
+        }
       }
       userErrors {
         field
